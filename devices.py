@@ -12,7 +12,7 @@ class Device(Geom2d):
         super().__init__(env=self.env, kp=self.bd, geom_type='polygon', color=self.color, parent=parent)
 
 
-    def _render(self) -> object:
+    def _render(self):
         self.geom = super()._render()
         self.attach = Transform(translation=(self.parent.sz * self.env.scale // 5, self.parent.sz * self.env.scale //3))
         self.geom.add_attr(self.attach)

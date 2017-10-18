@@ -33,7 +33,7 @@ class Simulator(object):
         self.move_to_center = Transform(translation=(self.metadata['screen_width'] // 2, self.metadata['screen_height'] // 2))
 
 
-    def _render(self, mode: object = 'human', close: object = False) -> object:
+    def _render(self, mode='human', close=False):
         if close:
             if self.viewer is not None:
                 self.viewer.close()
@@ -96,7 +96,7 @@ class Agent(Geom2d):
         self.geom.add_attr(self.rot)
         self.geom.add_attr(self.mov)
 
-    def _render(self) -> object:
+    def _render(self) :
             return self.geom
 
     def _update_render(self):
@@ -134,7 +134,7 @@ class Recorder(object):
         self.track = []
         self.colors = []
 
-    def _render(self) -> object:
+    def _render(self) :
         for a in self.agents:
             x, y, a = a.state
             c = a.color
@@ -229,7 +229,7 @@ class Map(Geom2d):
         self.geom = super()._render()
         env.map = self
 
-    def _render(self) -> object:
+    def _render(self):
         return self.geom
 
     def get_map_from_kps(self):
