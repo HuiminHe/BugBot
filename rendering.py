@@ -9,6 +9,9 @@ import sys
 import pyglet
 import numpy as np
 from numpy.linalg import norm
+
+from pyglet.gl import *
+
 if "Apple" in sys.version:
     if 'DYLD_FALLBACK_LIBRARY_PATH' in os.environ:
         os.environ['DYLD_FALLBACK_LIBRARY_PATH'] += ':/usr/lib'
@@ -362,7 +365,7 @@ class Geom2d(object):
         self.filled = filled
         self.n_pts = n_pts
 
-    def _render(self) -> object:
+    def _render(self):
         viewer = self.env.viewer
 
         c = np.mean(self.kp, axis=0) * self.env.scale
