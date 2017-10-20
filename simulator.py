@@ -5,7 +5,6 @@ import random
 from skimage.filters import threshold_otsu
 
 from rendering import Geom2d, Viewer, Transform
-from devices import Blob_finder
 
 collision_info = False
 rebounce = 1.0
@@ -19,7 +18,7 @@ class Simulator(object):
         'screen_width': 600,
         'screen_height': 600,
         'dt': 1.0 / 10,
-        'eps': 0.5
+        'eps': 1.0
     }
 
     def __init__(self):
@@ -70,8 +69,6 @@ class Simulator(object):
                 for d in agent.devices:
                     geom = d._render()
                     geom.add_attr(self.move_to_center)
-                    self.viewer.add_onetime(geom)
-
 
         # update collision detector
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
@@ -84,7 +81,6 @@ class Agent(Geom2d):
         kp = np.array([[-radius, 0], [radius, 0]])
         super().__init__(env, kp=kp, geom_type='circle', color=color, n_pts=10)
         env.agents.append(self)
-
         self.indx = type(self).counter
         type(self).counter += 1
         self.geom = super()._render()
@@ -95,6 +91,7 @@ class Agent(Geom2d):
         self.v_max = v_max
         self.geom.add_attr(self.rot)
         self.geom.add_attr(self.mov)
+        self.reset()
 
     def _render(self) :
             return self.geom
@@ -123,9 +120,6 @@ class Agent(Geom2d):
         x, y, a = self.state
         v = clip(v, max_norm=self.v_max)
         self.v = v
-
-    def add_device(self, device):
-        self.devices.append(device)
 
 
 class Recorder(object):
