@@ -382,7 +382,7 @@ class Geom2d(object):
             self.geom.set_color_rgb(self.color)
         if len(self.color) == 4:
             self.geom.set_color_rgba(self.color)
-        self.trans.append(Transform(translation=(c[0], c[1])))
+        #self.trans.append(Transform(translation=(c[0], c[1])))
 
 
         # if the geom2d has parent, add on parents transformation
