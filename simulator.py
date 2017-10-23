@@ -59,6 +59,12 @@ class Simulator(object):
                     geom = agent._render()
                     geom.add_attr(self.move_to_center)
                     self.viewer.add_geom(geom)
+                    for d in agent.devices:
+                        geom = d._render()
+                        geom.add_attr(self.move_to_center)
+                        self.viewer.add_geom(geom)
+                        
+
                 self.collision = CollisionDetector(self)
 
         if len(self.agents):
@@ -76,7 +82,7 @@ class Agent(Geom2d):
 
     def __init__(self, env, radius, geom_type='circle',device=None, color=(1,0,0,0.5), v_max=2.0):
         kp = np.array([[-radius, 0], [radius, 0]])
-        super().__init__(env, kp=kp, geom_type='circle', color=color, n_pts=10)
+        super().__init__(env, kp=kp, geom_type='circle', color=color, parent=None, n_pts=10)
         env.agents.append(self)
         self.indx = type(self).counter
         type(self).counter += 1
