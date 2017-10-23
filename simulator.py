@@ -48,13 +48,13 @@ class Simulator(object):
 
             if len(self.agents):
                 # randomly init the robots
-                # cell_sz = int(np.amax([a.sz for a in self.agents]))
-                # x = (np.array(random.sample(range(self.metadata['world_width'] // cell_sz), len(self.agents))) -
-                #      self.metadata['world_width'] //cell_sz / 2) * cell_sz * 0.7
-                # y = (np.array(random.sample(range(self.metadata['world_height'] // cell_sz), len(self.agents))) -
-                #      self.metadata['world_height'] //cell_sz / 2) * cell_sz * 0.7
+                cell_sz = int(np.amax([a.sz for a in self.agents]))
+                x = (np.array(random.sample(range(self.metadata['world_width'] // cell_sz), len(self.agents))) -
+                     self.metadata['world_width'] //cell_sz / 2) * cell_sz * 0.7
+                y = (np.array(random.sample(range(self.metadata['world_height'] // cell_sz), len(self.agents))) -
+                     self.metadata['world_height'] //cell_sz / 2) * cell_sz * 0.7
                 for i, agent in enumerate(self.agents):
-                    # agent.reset(init_state=np.array([x[i],y[i], 0.0]))
+                    agent.reset(init_state=np.array([x[i],y[i], 0.0]))
 
                     geom = agent._render()
                     geom.add_attr(self.move_to_center)
@@ -66,10 +66,7 @@ class Simulator(object):
             self.collision.detect()
             for agent in self.agents:
                 agent._update_render()
-                for d in agent.devices:
-                    geom = d._render()
-                    geom.add_attr(self.move_to_center)
-
+                
         # update collision detector
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
