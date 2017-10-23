@@ -3,7 +3,7 @@ import numpy as np
 
 
 class Device(Geom2d):
-    def __init__(self, env, parent, kp=np.array([[-1, 0], [1, 0]]), color=(1,0,0,0.5), geom_type=None):
+    def __init__(self, env, parent, kp=np.array([[-1, 0], [1, 0]]), color=(1,0,0,0.5), geom_type=None, filled=True):
         self.env = env
         self.bd = kp
         self.geom = None
@@ -12,11 +12,12 @@ class Device(Geom2d):
         self.parent.devices.append(self)
 
         if len(kp) > 2:
-            super().__init__(env=self.env, kp=self.bd, geom_type='polygon', color=self.color, parent=parent, n_pts=10)
+            super().__init__(env=self.env, kp=self.bd, geom_type='polygon', color=self.color, parent=parent, n_pts=10, filled=filled)
         elif len(kp) == 2:
-            super().__init__(env=self.env, kp=self.bd, geom_type='circle', color=self.color, parent=parent, n_pts=10)
+            super().__init__(env=self.env, kp=self.bd, geom_type='circle', color=self.color, parent=parent, n_pts=10, filled=filled)
 
         self.geom = super()._render()
+        self.geom.add_attr(self.env.move_to_center)
 
     def _render(self):
         return self.geom

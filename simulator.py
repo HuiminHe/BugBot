@@ -10,27 +10,18 @@ collision_info = False
 rebounce = 1.0
 
 class Simulator(object):
-    metadata = {
-        'render.modes': ['human', 'rgb_array'],
-        'video.frames_per_second' : 10,
-        'world_width': 200,
-        'world_height': 200,
-        'screen_width': 600,
-        'screen_height': 600,
-        'dt': 1.0 / 10,
-        'eps': 1.0
-    }
 
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.viewer = None
         self.state = None
         self.map = None
         self.agents = []
-        self.dt = self.metadata['dt']
+        self.dt = self.config.metadata['dt']
 
-        self.scale = self.metadata['screen_width'] / self.metadata['world_width']
-        self.move_to_center = Transform(translation=(self.metadata['screen_width'] // 2, self.metadata['screen_height'] // 2))
-
+        self.scale = self.config.metadata['screen_width'] / self.config.metadata['world_width']
+        self.move_to_center = Transform(translation=(self.config.metadata['screen_width'] // 2, self.config.metadata['screen_height'] // 2))
+        self.counter = 0
 
     def _render(self, mode='human', close=False):
         if close:
@@ -40,7 +31,7 @@ class Simulator(object):
             return
 
         if self.viewer is None:
-            self.viewer = Viewer(self.metadata['screen_width'], self.metadata['screen_height'])
+            self.viewer = Viewer(self.config.metadata['screen_width'], self.config.metadata['screen_height'])
             if self.map:
                 geom = self.map._render()
                 geom.add_attr(self.move_to_center)
@@ -48,20 +39,14 @@ class Simulator(object):
 
             if len(self.agents):
                 # randomly init the robots
-                cell_sz = int(np.amax([a.sz for a in self.agents]))
-                x = (np.array(random.sample(range(self.metadata['world_width'] // cell_sz), len(self.agents))) -
-                     self.metadata['world_width'] //cell_sz / 2) * cell_sz * 0.7
-                y = (np.array(random.sample(range(self.metadata['world_height'] // cell_sz), len(self.agents))) -
-                     self.metadata['world_height'] //cell_sz / 2) * cell_sz * 0.7
+                # cell_sz = int(np.amax([a.sz for a in self.agents]))
+                # x = (np.array(random.sample(range(self.config.metadata['world_width'] // cell_sz), len(self.agents))) -
+                #      self.config.metadata['world_width'] //cell_sz / 2) * cell_sz * 0.7
+                # y = (np.array(random.sample(range(self.config.metadata['world_height'] // cell_sz), len(self.agents))) -
+                #      self.config.metadata['world_height'] //cell_sz / 2) * cell_sz * 0.7
                 for i, agent in enumerate(self.agents):
-                    agent.reset(init_state=np.array([x[i],y[i], 0.0]))
-
-                    for d in agent.devices:
-                        geom = d._render()
-                        geom.add_attr(self.move_to_center)
-                        self.viewer.add_geom(geom)
+                    # agent.reset(init_state=np.array([x[i],y[i], 0.0]))
                     geom = agent._render()
-                    geom.add_attr(self.move_to_center)
                     self.viewer.add_geom(geom)
 
                 self.collision = CollisionDetector(self)
@@ -71,9 +56,12 @@ class Simulator(object):
             self.collision.detect()
             for agent in self.agents:
                 agent._update_render()
+                for d in agent.devices:
+                    geom = d._render()
+                    self.viewer.add_onetime(geom)
 
-                
         # update collision detector
+        self.counter += 1
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
 
@@ -93,8 +81,10 @@ class Agent(Geom2d):
         self.mov = Transform()
         self.trans = [self.rot, self.mov]
         self.v_max = v_max
+
         self.geom.add_attr(self.rot)
         self.geom.add_attr(self.mov)
+        self.geom.add_attr(self.env.move_to_center)
         self.reset()
 
     def _render(self) :
@@ -116,7 +106,7 @@ class Agent(Geom2d):
         if len(init_state):
             self.state = init_state
         else:
-            self.state =  (np.random.rand(3) - 0.5) * self.env.metadata['world_height'] * 0.7
+            self.state =  (np.random.rand(3) - 0.5) * self.env.config.metadata['world_height'] * 0.7
         self.v = rot_mat(np.array([self.v_max, 0.0]), np.random.rand()*np.pi*2)
         self.va = 0
 
@@ -144,7 +134,7 @@ class Recorder(object):
 class CollisionDetector(object):
     def __init__(self, env):
         self.env = env
-        self.eps = env.metadata['eps']
+        self.eps = env.config.metadata['eps']
         self.agents = env.agents
         self.cell_sz = np.amin([agent.sz for agent in self.agents])
         self.map_pts = env.map.pts
@@ -160,7 +150,7 @@ class CollisionDetector(object):
 
     def detect(self):
         self.update()
-        m_pts = self.map_pts# - np.array([env.metadata['world_width']//2, env.metadata['world_height']//2])
+        m_pts = self.map_pts# - np.array([env.config.metadata['world_width']//2, env.config.metadata['world_height']//2])
         agent_collision_vecs = np.zeros([len(self.agents), len(self.agents), 2])
         wall_collision_vecs = np.zeros([len(self.agents), 2])
         for i, a_loc in enumerate(self.agents_loc):
@@ -216,13 +206,17 @@ def clip(vec, max_norm=1.5):
 
 class Map(Geom2d):
     def __init__(self):
-        self.pts = []
+        pass
 
     def get_map_from_bitmap(self):
         return
 
-    def get_map_from_geom2d(self, env, radius=100, geom_type='circle', color=(0.0, 0.0, 0.0, 1), parent=None, n_pts=100):
-        kp = np.array([[-radius, 0], [radius, 0]])
+    def get_map_from_geom2d(self, env, kp, color=(0.0, 0.0, 0.0, 1), parent=None, n_pts=100):
+        if len(kp) > 2:
+            geom_type = 'polygon'
+        elif len(kp) == 2:
+            geom_type = 'circle'
+
         super().__init__(env=env, kp=kp, geom_type=geom_type, filled=False, color=color, parent=None, n_pts=n_pts)
         self.geom = super()._render()
         env.map = self
