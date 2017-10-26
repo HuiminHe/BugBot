@@ -2,8 +2,6 @@ import numpy as np
 from numpy.linalg import norm
 from scipy.spatial.distance import cdist
 import random
-from skimage.filters import threshold_otsu
-
 from rendering import Geom2d, Viewer, Transform
 
 collision_info = False
@@ -67,9 +65,8 @@ class Simulator(object):
 class Agent(Geom2d):
     counter = 0
 
-    def __init__(self, env, radius, geom_type='circle',device=None, color=(1,0,0,0.5), v_max=2.0):
-        kp = np.array([[-radius, 0], [radius, 0]])
-        super().__init__(env, kp=kp, geom_type='circle', color=color, parent=None, n_pts=10)
+    def __init__(self, env, kp, geom_type='circle',device=None, color=(1,0,0,0.5), v_max=2.0, a_max=1):
+        super().__init__(env, kp=kp, geom_type=geom_type, color=color, parent=None, n_pts=10)
         env.agents.append(self)
         self.indx = type(self).counter
         type(self).counter += 1
@@ -80,7 +77,8 @@ class Agent(Geom2d):
         self.mov = Transform()
         self.trans = [self.rot, self.mov]
         self.v_max = v_max
-
+        self.a_max = a_max
+        
         self.geom.add_attr(self.rot)
         self.geom.add_attr(self.mov)
         self.geom.add_attr(self.env.move_to_center)
@@ -90,7 +88,15 @@ class Agent(Geom2d):
             return self.geom
 
     def _update_render(self):
-        v = self.v
+        # clip acc
+        if norm(self.v - self.v_last) > self.a_max * self.env.dt:
+            self.v = self.v_last + clip(self.v - self.v_last, self.a_max * self.env.dt)
+            
+        # clip vel
+        if norm(self.v) > self.v_max:
+            v = clip(self.v, self.v_max)
+            self.ac = 0
+            
         x, y, a = self.state
         x += self.v[0] * self.env.dt
         y += self.v[1] * self.env.dt
@@ -99,15 +105,19 @@ class Agent(Geom2d):
 
         self.rot.set_rotation(a * self.env.dt)
         self.mov.set_translation(x * self.env.scale, y * self.env.scale)
-
+        self.v_last = self.v
+        
     def reset(self, init_state=()):
         self.init_state = init_state
         if len(init_state):
             self.state = init_state
         else:
-            self.state =  (np.random.rand(3) - 0.5) * self.env.config.metadata['world_height'] * 0.7
+            self.state =  (np.random.rand(3) - 0.5) * self.env.map.sz * 0.7 / 2
         self.v = rot_mat(np.array([self.v_max, 0.0]), np.random.rand()*np.pi*2)
-        self.va = 0
+        self.v_last = self.v
+        self.va = 0 # angular velocity
+        self.ac = np.array([0 ,0]) # acceleration
+        self.aa = 0.0 #angular acceleration
 
     def update(self, v=np.array([0.0, 0.0]), va=0):
         v = clip(v, max_norm=self.v_max)
@@ -200,9 +210,12 @@ class CollisionDetector(object):
 def rot_mat(vec, a):
     return np.array([np.cos(a) * vec[0] - np.sin(a) * vec[1], np.sin(a) * vec[0] + np.cos(a) * vec[1]])
 
+def dire(vec):
+    return vec / norm(vec)
+
 def clip(vec, max_norm=1.5):
     if norm(vec) > max_norm:
-        return vec / norm(vec) * max_norm
+        return dire(vec) * max_norm
     return vec
 
 class Map(Geom2d):
@@ -212,10 +225,10 @@ class Map(Geom2d):
     def get_map_from_bitmap(self):
         return
 
-    def get_map_from_geom2d(self, env, kp, color=(0.0, 0.0, 0.0, 1), parent=None, n_pts=100):
-        if len(kp) > 2:
+    def get_map_from_geom2d(self, env, kp, geom_type=None, color=(0.0, 0.0, 0.0, 1), parent=None, n_pts=100):
+        if len(kp) > 2 and not geom_type:
             geom_type = 'polygon'
-        elif len(kp) == 2:
+        elif len(kp) == 2 and not geom_type:
             geom_type = 'circle'
 
         super().__init__(env=env, kp=kp, geom_type=geom_type, filled=False, color=color, parent=None, n_pts=n_pts)
