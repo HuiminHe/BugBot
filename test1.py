@@ -1,9 +1,9 @@
 from simulator import Simulator, Map, Agent
 from devices import Device
 import numpy as np
-import config
+import env_config
 
-env = Simulator(config)
+env = Simulator(env_config)
 map = Map()
 map.get_map_from_geom2d(env, kp=np.array([[-100, 0], [100, 0]]), n_pts=180)
 
