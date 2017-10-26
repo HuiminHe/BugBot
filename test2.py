@@ -1,10 +1,11 @@
 from simulator import Simulator, Map, Agent
 import numpy as np
 from time import time
+import config
 
-env = Simulator()
+env = Simulator(config=config)
 map = Map()
-map.get_map_from_geom2d(env, radius=100, n_pts=180)
+map.get_map_from_geom2d(env, np.array([[-100,0], [100,0]]), n_pts=180)
 
 n_targets = 10
 n_robots = 10

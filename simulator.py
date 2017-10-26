@@ -7,7 +7,7 @@ from skimage.filters import threshold_otsu
 from rendering import Geom2d, Viewer, Transform
 
 collision_info = False
-rebounce = 1.0
+rebounce = 0.8
 
 class Simulator(object):
 
@@ -18,7 +18,7 @@ class Simulator(object):
         self.map = None
         self.agents = []
         self.dt = self.config.metadata['dt']
-
+        self.effects = []
         self.scale = self.config.metadata['screen_width'] / self.config.metadata['world_width']
         self.move_to_center = Transform(translation=(self.config.metadata['screen_width'] // 2, self.config.metadata['screen_height'] // 2))
         self.counter = 0
@@ -38,12 +38,6 @@ class Simulator(object):
                 self.viewer.add_geom(geom)
 
             if len(self.agents):
-                # randomly init the robots
-                # cell_sz = int(np.amax([a.sz for a in self.agents]))
-                # x = (np.array(random.sample(range(self.config.metadata['world_width'] // cell_sz), len(self.agents))) -
-                #      self.config.metadata['world_width'] //cell_sz / 2) * cell_sz * 0.7
-                # y = (np.array(random.sample(range(self.config.metadata['world_height'] // cell_sz), len(self.agents))) -
-                #      self.config.metadata['world_height'] //cell_sz / 2) * cell_sz * 0.7
                 for i, agent in enumerate(self.agents):
                     # agent.reset(init_state=np.array([x[i],y[i], 0.0]))
                     geom = agent._render()
@@ -60,10 +54,15 @@ class Simulator(object):
                     geom = d._render()
                     self.viewer.add_onetime(geom)
 
+        for e in self.effects:
+            self.viewer.add_onetime(e)
+
         # update collision detector
         self.counter += 1
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
+    def add_effect(self, effect):
+        self.effects.append(effect)
 
 class Agent(Geom2d):
     counter = 0
@@ -111,10 +110,12 @@ class Agent(Geom2d):
         self.va = 0
 
     def update(self, v=np.array([0.0, 0.0]), va=0):
-        x, y, a = self.state
         v = clip(v, max_norm=self.v_max)
         self.v = v
+        self.va = va
 
+    def loc(self):
+        return self.state[:2]
 
 class Recorder(object):
     def __init__(self, agents):
