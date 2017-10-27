@@ -4,6 +4,8 @@ from scipy.spatial.distance import cdist
 import random
 from rendering import Geom2d, Viewer, Transform
 
+from datetime import datetime
+
 collision_info = False
 rebounce = 0.8
 
@@ -17,6 +19,7 @@ class Simulator(object):
         self.agents = []
         self.dt = self.config.metadata['dt']
         self.effects = []
+        self.markers = []
         self.scale = np.ceil(self.config.metadata['screen_width'] / self.config.metadata['world_width'])
         self.move_to_center = Transform(translation=(self.config.metadata['screen_width'] // 2, self.config.metadata['screen_height'] // 2))
         self.counter = 0
@@ -35,6 +38,11 @@ class Simulator(object):
                 geom.add_attr(self.move_to_center)
                 self.viewer.add_geom(geom)
 
+            if self.markers:
+                for m in self.markers:
+                    m.add_attr(self.move_to_center)
+                    self.viewer.add_geom(m)
+                    
             if len(self.agents):
                 for i, agent in enumerate(self.agents):
                     # agent.reset(init_state=np.array([x[i],y[i], 0.0]))
@@ -62,6 +70,9 @@ class Simulator(object):
     def add_effect(self, effect):
         self.effects.append(effect)
 
+    def add_marker(self, marker):
+        self.markers.append(marker)
+        
 class Agent(Geom2d):
     counter = 0
 
@@ -126,21 +137,6 @@ class Agent(Geom2d):
 
     def loc(self):
         return self.state[:2]
-
-class Recorder(object):
-    def __init__(self, agents):
-        self.agents = agents
-        self.track = []
-        self.colors = []
-
-    def _render(self) :
-        for a in self.agents:
-            x, y, a = a.state
-            c = a.color
-            self.track.append([x, y])
-            self.colors.append(c)
-        return
-
 
 class CollisionDetector(object):
     def __init__(self, env):
