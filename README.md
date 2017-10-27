@@ -2,7 +2,7 @@
 # BugBot
 > BugBot is a open-source 2D bug robot simulator. 
 
-<table align="center">
+<table align="center" style="width:100%">
   <tr>
     <td> <img src="images/demo1.gif" alt="Drawing" style="width: 250px;"/> </td>
     <td> <img src="images/demo2.gif" alt="Drawing" style="width: 250px;"/> </td>
