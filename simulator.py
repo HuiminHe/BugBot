@@ -17,7 +17,7 @@ class Simulator(object):
         self.agents = []
         self.dt = self.config.metadata['dt']
         self.effects = []
-        self.scale = self.config.metadata['screen_width'] / self.config.metadata['world_width']
+        self.scale = np.ceil(self.config.metadata['screen_width'] / self.config.metadata['world_width'])
         self.move_to_center = Transform(translation=(self.config.metadata['screen_width'] // 2, self.config.metadata['screen_height'] // 2))
         self.counter = 0
 
