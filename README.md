@@ -1,6 +1,5 @@
 
 # BugBot
---------
 > BugBot is a open-source 2D bug robot simulator. 
 
 <table align="center">
