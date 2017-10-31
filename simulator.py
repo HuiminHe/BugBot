@@ -121,7 +121,6 @@ class Agent(Geom2d):
         y += self.v[1] * self.env.dt
         a += self.va * self.env.dt
         self.state = np.array([x, y, a])
-        print(self.state)
         self.rot.set_rotation(a * self.env.dt)
         self.mov.set_translation(x * self.env.scale, y * self.env.scale)
         self.v_last = np.array(self.v)
