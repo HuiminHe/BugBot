@@ -12,6 +12,8 @@ from numpy.linalg import norm
 
 from pyglet.gl import *
 
+import simulator_config
+
 if "Apple" in sys.version:
     if 'DYLD_FALLBACK_LIBRARY_PATH' in os.environ:
         os.environ['DYLD_FALLBACK_LIBRARY_PATH'] += ':/usr/lib'
@@ -353,13 +355,13 @@ class SimpleImageViewer(object):
 # ================================================================
 
 class Geom2d(object):
-    def __init__(self, env, kp=np.array([[-1, 0], [1, 0]]), geom_type='circle', filled=True, color=(0.0, 0.0, 0.0, 1.0), parent=None, n_pts=50):
+    def __init__(self, env, kp=np.array([[-1, 0], [1, 0]]), geom_type='circle', filled=True, color=(0.0, 0.0, 0.0, 1.0), parent=None, n_pts=300):
         self.env = env
         self.parent = parent
         self.trans = []
         self.geom_type = geom_type
         self.color = color
-        self.kp = kp
+        self.kp = self._interp(kp)
         self.color = color
         self.render = True
         self.filled = filled
@@ -374,7 +376,6 @@ class Geom2d(object):
             self.geom = make_circle(self.sz / 2 * self.env.scale, filled=self.filled)
             self.pts = np.array([np.cos(np.linspace(0, np.pi*2, self.n_pts)), np.sin(np.linspace(0, np.pi*2, self.n_pts))]).T * self.sz/2
         elif self.geom_type == 'polygon':
-            assert len(self.kp) >= 3
             self.geom = make_polygon(v=np.array(self.kp)* self.env.scale, filled=self.filled)
             # TODO: interpolation
             self.pts = np.array(self.kp)
@@ -393,3 +394,24 @@ class Geom2d(object):
             self.geom.add_attr(tran)
 
         return self.geom
+
+    def _interp(self, pts):
+        '''
+        interpolate the polygon given vertices
+        :param pts: a list of points
+        :param n_pts: total number of points
+        :return: a list of points with the length of n_pts
+        '''
+        out = []
+        for i in range(-1, len(pts)-1):
+            l_pts = np.ceil(np.linalg.norm(pts[i+1] - pts[i]) / simulator_config.metadata['eps'])
+            x = np.linspace(pts[i, 0], pts[i + 1, 0],l_pts)
+            y = np.linspace(pts[i, 1], pts[i + 1, 1], l_pts)
+            seg = np.vstack((x, y)).T
+            out.append(seg)
+        return np.concatenate(out)
+
+if __name__ == '__main__':
+    kp = np.array([[-100, 100], [-100, -100], [100, -100], [100, 100]])
+    n_pts = 180
+    geom = Geom2d(None, kp=kp)

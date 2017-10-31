@@ -3,10 +3,10 @@ from numpy.linalg import norm
 from scipy.spatial.distance import cdist
 import random
 from rendering import Geom2d, Viewer, Transform
-
+import simulator_config
 from datetime import datetime
 
-collision_info = False
+simulator_config.collision_info = False
 rebounce = 0.8
 
 class Simulator(object):
@@ -68,15 +68,21 @@ class Simulator(object):
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def add_effect(self, effect):
+        '''
+        add a one-time geometry in the simulation not detected by collision detector
+        '''
         self.effects.append(effect)
 
     def add_marker(self, marker):
+        '''
+        add a geometry that is not detected by collision detector
+        '''
         self.markers.append(marker)
         
 class Agent(Geom2d):
     counter = 0
 
-    def __init__(self, env, kp, geom_type='circle',device=None, color=(1,0,0,0.5), v_max=2.0, a_max=1):
+    def __init__(self, env, kp, geom_type='circle',device=None, color=(1,0,0,0.5), v_max=2.0, a_max=99):
         super().__init__(env, kp=kp, geom_type=geom_type, color=color, parent=None, n_pts=10)
         env.agents.append(self)
         self.indx = type(self).counter
@@ -89,7 +95,7 @@ class Agent(Geom2d):
         self.trans = [self.rot, self.mov]
         self.v_max = v_max
         self.a_max = a_max
-        
+
         self.geom.add_attr(self.rot)
         self.geom.add_attr(self.mov)
         self.geom.add_attr(self.env.move_to_center)
@@ -100,23 +106,25 @@ class Agent(Geom2d):
 
     def _update_render(self):
         # clip acc
-        if norm(self.v - self.v_last) > self.a_max * self.env.dt:
-            self.v = self.v_last + clip(self.v - self.v_last, self.a_max * self.env.dt)
-            
+        if norm(self.v - self.v_last) > self.a_max * self.env.dt or (norm(self.v - self.v_last) > 0 and norm(self.ac) == 0):
+            self.ac = dire(self.v - self.v_last) * self.a_max
+            self.v = self.v_last + dire(self.v - self.v_last) * self.a_max * self.env.dt
+        else:
+            self.v = self.v_last + self.ac * self.env.dt
+
         # clip vel
         if norm(self.v) > self.v_max:
-            v = clip(self.v, self.v_max)
-            self.ac = 0
+            self.v = clip(self.v, self.v_max)
             
         x, y, a = self.state
         x += self.v[0] * self.env.dt
         y += self.v[1] * self.env.dt
         a += self.va * self.env.dt
         self.state = np.array([x, y, a])
-
+        print(self.state)
         self.rot.set_rotation(a * self.env.dt)
         self.mov.set_translation(x * self.env.scale, y * self.env.scale)
-        self.v_last = self.v
+        self.v_last = np.array(self.v)
         
     def reset(self, init_state=()):
         self.init_state = init_state
@@ -125,7 +133,7 @@ class Agent(Geom2d):
         else:
             self.state =  (np.random.rand(3) - 0.5) * self.env.map.sz * 0.7 / 2
         self.v = rot_mat(np.array([self.v_max, 0.0]), np.random.rand()*np.pi*2)
-        self.v_last = self.v
+        self.v_last = np.array([0, 0])
         self.va = 0 # angular velocity
         self.ac = np.array([0 ,0]) # acceleration
         self.aa = 0.0 #angular acceleration
@@ -152,7 +160,7 @@ class CollisionDetector(object):
         self.agents_loc = []
         for a in self.env.agents:
             x, y, a = a.state
-            self.agents_loc.append([int(x//self.cell_sz), int(y//self.cell_sz)])
+            self.agents_loc.append([int(x/self.cell_sz), int(y/self.cell_sz)])
         self.agents_loc = np.array(self.agents_loc)
 
     def detect(self):
@@ -171,7 +179,7 @@ class CollisionDetector(object):
                     j_pts = self.agents[j].pts + self.agents[j].state[:2] + self.agents[j].v * self.env.dt * self.env.scale
                     dist_ij = cdist(i_pts, j_pts, 'euclidean')
                     if np.amin(dist_ij) < self.eps:
-                        if collision_info:
+                        if simulator_config.collision_info:
                             print('Collission detected between agent {} and {}'.format(i, j))
                         loc_i = np.array(self.agents[i].state[:2])
                         loc_j = np.array(self.agents[j].state[:2])
@@ -179,11 +187,11 @@ class CollisionDetector(object):
                         agent_collision_vecs[i, j] = vec / norm(vec)
                         self.agents[i].v = (self.agents[i].v - vec * norm(self.agents[i].v))*rebounce
                         self.agents[j].v = (self.agents[j].v + vec * norm(self.agents[j].v))*rebounce
-                    # collision between agents and map
 
+            # collision between agents and map
             dist_im = cdist(i_pts, m_pts)
-            if np.amin(dist_im) < 2.0:
-                if collision_info:
+            if np.amin(dist_im) < simulator_config.metadata['eps']:
+                if simulator_config.collision_info:
                     print('Collision detected btween agent {} and the map'.format(i))
                 x, y = np.where(dist_im == np.amin(dist_im))
                 pi = np.array(self.agents[i].state[:2])
