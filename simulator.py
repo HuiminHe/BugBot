@@ -154,11 +154,19 @@ class Agent(Geom2d):
         self.inCollision = False
         self.initializing = True
 
-    def update(self, v=np.array([0.0, 0.0]), va=0):
-        v = clip(v, max_norm=self.v_max)
-        self.v = v
-        self.va = va
-
+    def update(self, v=None, va=None, ac=None):
+        if v is not None:
+            v = clip(v, max_norm=self.v_max)
+            self.v = v
+        if va is not None:
+            self.va = va
+        if ac is not None:
+            if v is not None:
+                raise ValueError('User can only set either velocity or acceleration.')
+            else:
+                self.ac = ac
+        return
+        
     def loc(self):
         return self.state[:2]
 

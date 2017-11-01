@@ -147,3 +147,18 @@ while True:
     [r.update(t) for r in robots]
     env._render()
 ```
+
+All object in the window is defined on geom2d in **rendering.py** which provide a easy way to add a polygon into the viwer. Based on geom2d, there are just five classes that you may want to use in your simulation.
+
+- **Simulator(self, simulator_config)** : to handle rendering, collision detection and update. The format of config object is provided in the example above. You can call:
+    - _render(): generate a new frame on the display or output into an numpy ndarray.
+    - add_marker(gemo2d): add a geom2d that keeps rendering before destroyed.
+    - add_effect(gemo2d): add a geom2d rendered once in the current frame.
+    
+- **Collision Detector(self, env)**: to handle collsion. It is already integrated into default simulator. By default, you do not need to call this this object.
+
+- **Agent(self, env, kp)** : a object can move and be detected by collision detector. You can make robots, obstacles as the subclass of this one. You can call:
+    - loc(self): get location of the agent in the world
+    - update(self, v, va, ac): you can overload this method to customize the agent's behavior.
+    
+- **Device**: a object can not be detected by collision detector. You can visualize sensor range with it. You can make a sensor as the subclass of it (a blobfinder is defined as an example in **devices.py**).
