@@ -88,7 +88,7 @@ class Agent(Geom2d):
         env.agents.append(self)
         self.indx = type(self).counter
         type(self).counter += 1
-        if self.np.amax(cdist(kp, kp)) < self.env.config.metadata['eps']:
+        if np.amax(cdist(kp, kp)) < self.env.config.metadata['eps']:
             raise ValueError('Agent is smaller than eps in simulator_config')
         self.geom = super()._render()
         self.devices = []
