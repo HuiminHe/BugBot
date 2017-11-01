@@ -359,6 +359,14 @@ class Geom2d(object):
     def __init__(self, env, kp=np.array([[-1, 0], [1, 0]]), filled=True, color=(0.0, 0.0, 0.0, 1.0), parent=None):
         self.env = env
         self.kp = kp
+        if len(kp) > 1:
+            if np.amax(cdist(kp, kp)) < self.env.config.metadata['eps']:
+                raise ValueError('Object is smaller than eps in simulator_config')
+        else:
+            if env.config.metadata['eps'] < 5:
+                raise ValueError('Object is smaller than eps in simulator_config')
+            
+
         self.parent = parent
         self.trans = []
         self.color = color
@@ -370,8 +378,8 @@ class Geom2d(object):
         c = np.mean(self.kp, axis=0) * self.env.scale
         self.sz = np.amax(cdist(self.kp, self.kp))
         if len(self.kp) == 1:
-            # create a point
-            self.geom = make_circle(1 * self.env.scale, filled=self.filled)
+            # create a circle
+            self.geom = make_circle(5 * self.env.scale, filled=self.filled)
             self.geom.add_attr(Transform(translation=kp))
             self.pts = np.array(self.geom.v) / self.env.scale
             self.sz = 2
