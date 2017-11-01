@@ -21,6 +21,7 @@ class Simulator(object):
         self.effects = []
         self.markers = []
         self.scale = np.ceil(self.config.metadata['screen_width'] / self.config.metadata['world_width'])
+        self.config.metadata['screen_width'] = int(self.config.metadata['world_width'] * self.scale)
         self.move_to_center = Transform(translation=(self.config.metadata['screen_width'] // 2, self.config.metadata['screen_height'] // 2))
         self.counter = 0
 
@@ -87,6 +88,8 @@ class Agent(Geom2d):
         env.agents.append(self)
         self.indx = type(self).counter
         type(self).counter += 1
+        if self.np.amax(cdist(kp, kp)) < self.env.config.metadata['eps']:
+            raise ValueError('Agent is smaller than eps in simulator_config')
         self.geom = super()._render()
         self.devices = []
         self.color = color
