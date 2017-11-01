@@ -1,10 +1,12 @@
 import numpy as np
-import scipy.spatial.distance
-
+from scipy.spatial.distance import cdist
+from simulator import Map
 def dist(a, b):
-    pa = a.state[:2]
-    pb = b.state[:2]
-    return np.linalg.norm(pb-pa)
+    assert type(a) != type(Map)
+    scale = a.env.scale
+    pa = a.geom.v / scale  + a.loc()
+    pb = b.geom.v / scale  + b.loc()
+    return np.amin(cdist(pa, pb))
 
 def dire(v):
     return v / np.linalg.norm(v)

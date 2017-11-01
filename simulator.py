@@ -260,13 +260,15 @@ class Map(Geom2d):
         super().__init__(env=env, kp=kp, filled=False, color=color, parent=None)
         self.geom = super()._render()
         env.map = self
-
+        
     def _render(self):
         return self.geom
 
     def get_map_from_kps(self):
         pass
 
+    def loc(self):
+        return np.array([0.0, 0.0])
 
 if __name__ == '__main__':
     pass

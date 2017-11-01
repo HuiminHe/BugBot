@@ -5,16 +5,13 @@ from utils import dist
 class Device(Geom2d):
     def __init__(self, env, parent, kp=np.array([[-1, 0], [1, 0]]), color=(1,0,0,0.5), geom_type=None, filled=True):
         self.env = env
-        self.bd = kp
+        self.kp = kp
         self.geom = None
         self.color = color
         self.parent = parent
         self.parent.devices.append(self)
 
-        if len(kp) > 2 or geom_type=='polygon':
-            super().__init__(env=self.env, kp=self.bd, color=self.color, parent=parent, filled=filled)
-        elif len(kp) == 2 or geom_type=='circle':
-            super().__init__(env=self.env, kp=self.bd, color=self.color, parent=parent, filled=filled)
+        super().__init__(env=self.env, kp=self.kp, color=self.color, parent=parent, filled=filled)
 
         self.geom = super()._render()
         self.geom.add_attr(self.env.move_to_center)
@@ -26,7 +23,7 @@ class BlobFinder(Device):
     def __init__(self, env, parent, radius, color=(1,0,0,0.5), geom_type=None, filled=True):
         self.radius = radius
         kp=np.array([[-radius, 0], [radius, 0]])
-        Device.__init__(self, env, parent, kp=kp, color=color, geom_type=geom_type, filled=filled)
+        Device.__init__(self, env, parent, kp=kp, color=color, filled=filled)
 
     def read(self):
         blob = []
