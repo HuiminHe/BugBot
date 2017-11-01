@@ -1,8 +1,9 @@
 
 # BugBot
+--------
 > BugBot is a open-source 2D bug robot simulator. 
 
-<table bordercolor="white">
+<table align="center">
   <tr>
     <td> <img src="images/demo1.gif" alt="Drawing" style="width: 250px;"/> </td>
     <td> <img src="images/demo2.gif" alt="Drawing" style="width: 250px;"/> </td>
@@ -33,22 +34,23 @@ class config:
     'render.modes': ['human', 'rgb_array'],
     'video.frames_per_second': 10,
     'world_width': 300, 
-    'world_height': 250,
+    'world_height': 300,
     'screen_width': 600,
-    'screen_height': 500,
+    'screen_height': 600,
     'dt': 1.0 / 10,
     'eps': 5.0
     }
+    rebounce = 0.5
 
 env = Simulator(config=config)
 map = Map()
-map.get_map_from_geom2d(env, kp=np.array([[-100,0], [100,0]]), geom_type='circle', n_pts=180)
+map.get_map_from_geom2d(env, kp=np.array([[-100,0], [100,0]]))
 
 n_targets = 10
 n_robots = 10
 
-targets = [Agent(env, kp=np.array([[-3, 0], [3, 0]]), geom_type='circle', color=(1, 0, 0, 0.5), v_max=1.5) for i in range(n_targets)]
-robots = [Agent(env,  kp=np.array([[-3, 0], [3, 0]]), geom_type='circle', color=(1, 0, 1, 0.5), v_max=2) for i in range(n_robots)]
+targets = [Agent(env, kp=np.array([[-3, 0], [3, 0]]), color=(1, 0, 0, 0.5), v_max=1.5) for i in range(n_targets)]
+robots = [Agent(env,  kp=np.array([[-3, 0], [3, 0]]), color=(1, 0, 1, 0.5), v_max=2) for i in range(n_robots)]
 vs = (np.random.rand(n_targets+n_robots,2) - 0.5) * 4
 
 while True:
@@ -81,6 +83,7 @@ class config:
     'dt': 1.0 / 10,
     'eps': 5.0
     }
+    rebounce = 1.5
 
 class Robot(Agent):
     def __init__(self, env):
@@ -90,7 +93,6 @@ class Robot(Agent):
         '''
         Agent.__init__(self, env, 
                        kp=np.array([[-2, -2], [2, -2], [2, 2], [-2, 2]]), 
-                       geom_type='polygon', 
                        color=(1, 0, 0, 0.5), 
                        v_max=2.0)
     def update(self, t):
@@ -102,7 +104,7 @@ class Robot(Agent):
 
 env = Simulator(config=config)
 my_map = Map()
-my_map.get_map_from_geom2d(env, kp=np.array([[-100, 0], [100, 0]]), geom_type='circle', n_pts=180)
+my_map.get_map_from_geom2d(env, kp=np.array([[-100, 0], [100, 0]]))
 
 robots = [Robot(env) for i in range(5)]
 
