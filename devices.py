@@ -12,9 +12,9 @@ class Device(Geom2d):
         self.parent.devices.append(self)
 
         if len(kp) > 2 or geom_type=='polygon':
-            super().__init__(env=self.env, kp=self.bd, geom_type='polygon', color=self.color, parent=parent, n_pts=10, filled=filled)
+            super().__init__(env=self.env, kp=self.bd, color=self.color, parent=parent, filled=filled)
         elif len(kp) == 2 or geom_type=='circle':
-            super().__init__(env=self.env, kp=self.bd, geom_type='circle', color=self.color, parent=parent, n_pts=10, filled=filled)
+            super().__init__(env=self.env, kp=self.bd, color=self.color, parent=parent, filled=filled)
 
         self.geom = super()._render()
         self.geom.add_attr(self.env.move_to_center)

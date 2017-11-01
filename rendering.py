@@ -23,6 +23,7 @@ import math
 import numpy as np
 from scipy.spatial.distance import cdist
 
+
 RAD2DEG = 57.29577951308232
 
 def get_display(spec):
@@ -355,30 +356,39 @@ class SimpleImageViewer(object):
 # ================================================================
 
 class Geom2d(object):
-    def __init__(self, env, kp=np.array([[-1, 0], [1, 0]]), geom_type='circle', filled=True, color=(0.0, 0.0, 0.0, 1.0), parent=None, n_pts=300):
+    def __init__(self, env, kp=np.array([[-1, 0], [1, 0]]), filled=True, color=(0.0, 0.0, 0.0, 1.0), parent=None):
         self.env = env
+        self.kp = kp
         self.parent = parent
         self.trans = []
-        self.geom_type = geom_type
         self.color = color
-        self.kp = self._interp(kp)
-        self.color = color
-        self.render = True
         self.filled = filled
-        self.n_pts = n_pts
 
     def _render(self):
         viewer = self.env.viewer
 
         c = np.mean(self.kp, axis=0) * self.env.scale
         self.sz = np.amax(cdist(self.kp, self.kp))
-        if self.geom_type == 'circle':
-            self.geom = make_circle(self.sz / 2 * self.env.scale, filled=self.filled)
-            self.pts = np.array([np.cos(np.linspace(0, np.pi*2, self.n_pts)), np.sin(np.linspace(0, np.pi*2, self.n_pts))]).T * self.sz/2
-        elif self.geom_type == 'polygon':
-            self.geom = make_polygon(v=np.array(self.kp)* self.env.scale, filled=self.filled)
+        if len(self.kp) == 1:
+            # create a point
+            self.geom = make_circle(1 * self.env.scale, filled=self.filled)
+            self.geom.add_attr(Transform(translation=kp))
+            self.pts = np.array(self.geom.v) / self.env.scale
+            self.sz = 2
+        elif len(self.kp) == 2:
+            radius = norm(self.kp[1] - self.kp[0]) / 2
+            n_pts = radius * np.pi * 2 / self.env.config.metadata['eps']
+            deg = np.linspace(0, np.pi * 2, n_pts)
+            self.kp = np.array([np.cos(deg) * radius, np.sin(deg) * radius]).T
+            self.geom = make_polygon(v=self.kp * self.env.scale, filled=self.filled)
             # TODO: interpolation
-            self.pts = np.array(self.kp)
+            self.pts = self.kp
+            self.sz = radius * 2
+        else:
+            self.pts = self._interp(self.kp)
+            self.geom = make_polygon(v=self.pts * self.env.scale, filled=self.filled)
+            self.sz = np.amax(cdist(self.kp, self.kp))
+
         if len(self.color) == 3:
             self.geom.set_color_rgb(self.color)
         if len(self.color) == 4:
@@ -404,7 +414,7 @@ class Geom2d(object):
         '''
         out = []
         for i in range(-1, len(pts)-1):
-            l_pts = np.ceil(np.linalg.norm(pts[i+1] - pts[i]) / simulator_config.metadata['eps'])
+            l_pts = np.ceil(np.linalg.norm(pts[i+1] - pts[i]) / self.env.config.metadata['eps'])
             x = np.linspace(pts[i, 0], pts[i + 1, 0],l_pts)
             y = np.linspace(pts[i, 1], pts[i + 1, 1], l_pts)
             seg = np.vstack((x, y)).T

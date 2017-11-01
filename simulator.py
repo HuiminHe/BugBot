@@ -83,7 +83,7 @@ class Agent(Geom2d):
     counter = 0
 
     def __init__(self, env, kp, geom_type='circle',device=None, color=(1,0,0,0.5), v_max=2.0, a_max=99):
-        super().__init__(env, kp=kp, geom_type=geom_type, color=color, parent=None, n_pts=10)
+        super().__init__(env, kp=kp, color=color, parent=None)
         env.agents.append(self)
         self.indx = type(self).counter
         type(self).counter += 1
@@ -252,13 +252,8 @@ class Map(Geom2d):
     def get_map_from_bitmap(self):
         return
 
-    def get_map_from_geom2d(self, env, kp, geom_type=None, color=(0.0, 0.0, 0.0, 1), parent=None, n_pts=100):
-        if len(kp) > 2 and not geom_type:
-            geom_type = 'polygon'
-        elif len(kp) == 2 and not geom_type:
-            geom_type = 'circle'
-
-        super().__init__(env=env, kp=kp, geom_type=geom_type, filled=False, color=color, parent=None, n_pts=n_pts)
+    def get_map_from_geom2d(self, env, kp, color=(0.0, 0.0, 0.0, 1), parent=None):
+        super().__init__(env=env, kp=kp, filled=False, color=color, parent=None)
         self.geom = super()._render()
         env.map = self
 
