@@ -1,9 +1,9 @@
 from simulator import Simulator, Map, Agent
 import numpy as np
 from time import time
-import env_config
+import simulator_config
 
-env = Simulator(config=env_config)
+env = Simulator(config=simulator_config)
 map = Map()
 map.get_map_from_geom2d(env, np.array([[-100,0], [100,0]]), n_pts=180)
 

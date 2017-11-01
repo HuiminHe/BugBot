@@ -5,8 +5,9 @@ metadata = {
     'world_height': 300,
     'screen_width': 500,
     'screen_height': 500,
-    'dt': 1.0 / 50,
+    'dt': 1.0 / 10,
     'eps': 1.0,
     'rebounce_time': 3
 }
 collision_info = True
+rebounce = 0.5

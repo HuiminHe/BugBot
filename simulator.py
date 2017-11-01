@@ -7,7 +7,7 @@ import simulator_config
 from datetime import datetime
 
 simulator_config.collision_info = False
-rebounce = 0.8
+
 
 class Simulator(object):
 
@@ -105,17 +105,29 @@ class Agent(Geom2d):
             return self.geom
 
     def _update_render(self):
-        # clip acc
-        if norm(self.v - self.v_last) > self.a_max * self.env.dt or (norm(self.v - self.v_last) > 0 and norm(self.ac) == 0):
-            self.ac = dire(self.v - self.v_last) * self.a_max
-            self.v = self.v_last + dire(self.v - self.v_last) * self.a_max * self.env.dt
-        else:
+        if not equal(self.ac, self.ac_last) and not equal(self.v, self.v_last + self.ac_last * self.env.dt):
+            if self.inCollision or self.initializing:
+                pass
+            else:
+                raise ValueError('User can only set velocity or acceleration')
+
+        if self.initializing:
+            self.initializing = False
+
+
+        # velocity control
+        if not equal(self.v, self.v_last + self.ac_last * self.env.dt):
+            self.ac = clip(self.v - self.v_last, self.a_max)
             self.v = self.v_last + self.ac * self.env.dt
+        else:
+            self.ac = clip(self.ac, self.a_max)
+        self.v = self.v_last + self.ac * self.env.dt
 
         # clip vel
         if norm(self.v) > self.v_max:
             self.v = clip(self.v, self.v_max)
-            
+
+        # update state
         x, y, a = self.state
         x += self.v[0] * self.env.dt
         y += self.v[1] * self.env.dt
@@ -124,7 +136,8 @@ class Agent(Geom2d):
         self.rot.set_rotation(a * self.env.dt)
         self.mov.set_translation(x * self.env.scale, y * self.env.scale)
         self.v_last = np.array(self.v)
-        
+        self.ac_last = np.array(self.ac)
+
     def reset(self, init_state=()):
         self.init_state = init_state
         if len(init_state):
@@ -135,7 +148,10 @@ class Agent(Geom2d):
         self.v_last = np.array([0, 0])
         self.va = 0 # angular velocity
         self.ac = np.array([0 ,0]) # acceleration
+        self.ac_last = np.array([0, 0])
         self.aa = 0.0 #angular acceleration
+        self.inCollision = False
+        self.initializing = True
 
     def update(self, v=np.array([0.0, 0.0]), va=0):
         v = clip(v, max_norm=self.v_max)
@@ -184,8 +200,8 @@ class CollisionDetector(object):
                         loc_j = np.array(self.agents[j].state[:2])
                         vec= np.array((loc_j - loc_i) / norm(loc_j - loc_i))
                         agent_collision_vecs[i, j] = vec / norm(vec)
-                        self.agents[i].v = (self.agents[i].v - vec * norm(self.agents[i].v))*rebounce
-                        self.agents[j].v = (self.agents[j].v + vec * norm(self.agents[j].v))*rebounce
+                        self.agents[i].v = (self.agents[i].v - vec * norm(self.agents[i].v))*(1.1 + self.env.config.rebounce)
+                        self.agents[j].v = (self.agents[j].v + vec * norm(self.agents[j].v))*(1.1 + self.env.config.rebounce)
 
             # collision between agents and map
             dist_im = cdist(i_pts, m_pts)
@@ -196,7 +212,7 @@ class CollisionDetector(object):
                 pi = np.array(self.agents[i].state[:2])
                 pm = self.map_pts[y[0]]
                 vec = np.array((pm - pi) / norm(pm - pi))
-                self.agents[i].v = (- vec * norm(self.agents[i].v))*rebounce
+                self.agents[i].v = (- vec * norm(self.agents[i].v))*(1.1 + self.env.config.rebounce)
                 wall_collision_vecs[i] = vec
         return agent_collision_vecs, wall_collision_vecs
     #
@@ -208,7 +224,7 @@ class CollisionDetector(object):
     #             for vec in collision_vecs:
     #                 if np.inner(v, vec) >= 0:
     #                     agent.v = np.array([0, 0])
-    #                 #v -= vec / norm(vec)**2 * np.inner(v, vec) * rebounce
+    #                 #v -= vec / norm(vec)**2 * np.inner(v, vec) * (1.1 + self.env.config.rebounce)
 
 def rot_mat(vec, a):
     return np.array([np.cos(a) * vec[0] - np.sin(a) * vec[1], np.sin(a) * vec[0] + np.cos(a) * vec[1]])
@@ -220,6 +236,14 @@ def clip(vec, max_norm=1.5):
     if norm(vec) > max_norm:
         return dire(vec) * max_norm
     return vec
+
+def equal(vec1, vec2):
+    if len(vec1) != len(vec2):
+        return False
+    elif norm(vec1 - vec2) == 0:
+        return True
+    else:
+        return False
 
 class Map(Geom2d):
     def __init__(self):
