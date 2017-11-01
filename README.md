@@ -64,7 +64,7 @@ while True:
         t.update(v=np.array(vs[i]))
 ```
 
-In bugbot simulation, either map or agents are subclass of *Geom2d* which is a wrapper over Geom defined in [OpenAI Gym](https://github.com/openai/gym). You can define a Geom2d using *keypoints* and *geom_type*. if the length of keypoints is less than 3, geom type is automatically set to be 'circle', otherwise the default is 'polygon'. For OOP user, you will want to customize your agent as the subclass of the base class. An more compact example is also given here
+In bugbot simulation, either map or agents are subclass of *Geom2d* which is a wrapper over Geom defined in [OpenAI Gym](https://github.com/openai/gym). You can define a Geom2d using *keypoints(kp)* . if the length of keypoints is less than 3, geom type is automatically parsed as a 'circle', otherwise the default is 'polygon'. For OOP user, you will want to customize your agent as the subclass of the base class. An more compact example is also given here
 
 
 ```python
@@ -121,17 +121,16 @@ class Sensor(Device):
         return true if detect something.
         '''
         for a in self.env.agents:
-            if a is not self.parent and dist(self.parent, a) < self.radius:
-                self.geom.set_color_rgba(np.array([1, 0, 0, 0.5]))
-                print('collision with agents')
+            if a is not self.parent:
                 print(dist(self.parent, a))
+            if (a is not self.parent) and dist(self.parent, a) < self.radius:
+                self.geom.set_color_rgba(np.array([1, 0, 0, 0.5]))
                 return True
-        print(dist(self.parent, self.env.map))
         if dist(self.parent, self.env.map) < self.radius:
             self.geom.set_color_rgba(np.array([1, 0, 0, 0.5]))
-            
             return True
         
+        # no collision
         self.geom.set_color_rgba(np.array([0, 1, 0, 0.5]))
         return False
     
@@ -140,7 +139,7 @@ env = Simulator(config=config)
 my_map = Map()
 my_map.get_map_from_geom2d(env, kp=np.array([[-100, 0], [100, 0]]))
 
-robots = [Robot(env) for i in range(5)]
+robots = [Robot(env) for i in range(2)]
 
 while True:
     t = time()
