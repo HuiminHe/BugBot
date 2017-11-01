@@ -83,13 +83,11 @@ class Simulator(object):
 class Agent(Geom2d):
     counter = 0
 
-    def __init__(self, env, kp, geom_type='circle',device=None, color=(1,0,0,0.5), v_max=2.0, a_max=99):
+    def __init__(self, env, kp, device=None, color=(1,0,0,0.5), v_max=2.0, a_max=99):
         super().__init__(env, kp=kp, color=color, parent=None)
         env.agents.append(self)
         self.indx = type(self).counter
         type(self).counter += 1
-        if np.amax(cdist(kp, kp)) < self.env.config.metadata['eps']:
-            raise ValueError('Agent is smaller than eps in simulator_config')
         self.geom = super()._render()
         self.devices = []
         self.color = color
@@ -140,7 +138,7 @@ class Agent(Geom2d):
         self.mov.set_translation(x * self.env.scale, y * self.env.scale)
         self.v_last = np.array(self.v)
         self.ac_last = np.array(self.ac)
-
+        
     def reset(self, init_state=()):
         self.init_state = init_state
         if len(init_state):

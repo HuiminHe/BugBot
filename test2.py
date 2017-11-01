@@ -13,6 +13,7 @@ n_robots = 10
 targets = [Agent(env, kp=np.array([[-2, 0], [2, 0]]), color=(1, 0, 0, 0.5), v_max=1.5) for i in range(n_targets)]
 robots = [Agent(env, kp=np.array([[-2, 0], [2, 0]]), color=(0, 0, 1, 0.5), v_max=2) for i in range(n_targets, n_robots+n_targets)]
 tic = time()
+# set speed betwee -2 to 2 in both direction
 vs = (np.random.rand(n_targets+n_robots,2) - 0.5) * 4
 
 
