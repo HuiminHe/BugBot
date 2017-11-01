@@ -203,8 +203,10 @@ class CollisionDetector(object):
                         loc_j = np.array(self.agents[j].state[:2])
                         vec= np.array((loc_j - loc_i) / norm(loc_j - loc_i))
                         agent_collision_vecs[i, j] = vec / norm(vec)
-                        self.agents[i].v = (self.agents[i].v - vec * norm(self.agents[i].v))*(1.1 + self.env.config.rebounce)
-                        self.agents[j].v = (self.agents[j].v + vec * norm(self.agents[j].v))*(1.1 + self.env.config.rebounce)
+                        self.agents[i].v -= (vec * norm(self.agents[i].v))*(1.1 + self.env.config.rebounce)
+                        self.agents[j].v += (vec * norm(self.agents[j].v))*(1.1 + self.env.config.rebounce)
+                        self.agents[i].inCollision = True
+                        self.agents[j].inCollision = True
 
             # collision between agents and map
             dist_im = cdist(i_pts, m_pts)
@@ -217,6 +219,7 @@ class CollisionDetector(object):
                 vec = np.array((pm - pi) / norm(pm - pi))
                 self.agents[i].v = (- vec * norm(self.agents[i].v))*(1.1 + self.env.config.rebounce)
                 wall_collision_vecs[i] = vec
+                self.agents[i].inCollision = True
         return agent_collision_vecs, wall_collision_vecs
     #
     # def correct(self):
